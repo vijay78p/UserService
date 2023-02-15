@@ -1,0 +1,101 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: USER-SERVICE
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/microservices
+    username: root
+    password: root1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  config:
+    import: configserver:http://localhost:8086
+#okta configuration to connect the okta server
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-97201242.okta.com/oauth2/default
+# Below are the client configs since userservice is calling another service.
+      client:
+        registration:
+          my-internal-client:
+            provider: okta
+            authorization-grant-type: client_credentials
+            scope: internal
+            client-id: 0oa8bjljnhDdcvZh25d7
+            client-secret:  zjOc3HGLZQSaguc0PBS-mlkILKrrdQmCxvqcAtTs
+        provider:
+          okta:
+            issuer-uri: https://dev-97201242.okta.com/oauth2/default
+
+
+
+# Below line of code is used for activating environment specific properties
+#  profiles:
+#    active: Dev
+
+# moved to centerlized configuration server for common configuration.
+#eureka:
+#  instance:
+#    prefer-ip-address: true
+#    hostname: localhost
+#  client:
+#    register-with-eureka: true
+#    fetch-registry: true
+#    service-url:
+#      defaultZone: http://localhost:8085/eureka
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      ratingHotelFallback:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 2
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 1s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+
+#        register-health-indicator: true
+#        event-consumer-buffer-size: 10
+#        failure-rate-threshold: 50
+#        minimum-number-of-calls: 5
+#        automatic-transition-from-open-to-half-open-enabled: true
+#        wait-duration-in-open-state: 6s
+#        permitted-number-of-calls-in-half-open-state: 3
+#        sliding-window-size: 10
+#        sliding-window-type: COUNT_BASED
+okta:
+  oauth2:
+    issuer: https://dev-97201242.okta.com/oauth2/default
+    audience: api://default
+
+
+
